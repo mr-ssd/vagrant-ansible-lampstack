@@ -25,6 +25,7 @@
       - mariadb-server
       - mariadb-client
       - unzip
+      - nginx
     root_password: "Wordpress"
   tasks:
     - name: Install prerequisites packages
@@ -147,8 +148,38 @@
         state: present
         name: rewrite
 
+    - name: Update apache port config file
+      become: true
+      ansible.builtin.copy:
+        src: /vagrant/ports.conf
+        dest: /etc/apache2/ports.conf
+
     - name: Retart apache2 service
       become: true
       ansible.builtin.systemd:
         name: apache2
+        state: restarted
+
+    - name: Copy nginx wordpress conf
+      become: true
+      ansible.builtin.copy:
+        src: /vagrant/wordpress_proxy.conf
+        dest: /etc/nginx/conf.d/wordpress_proxy.conf
+
+    - name: Create nginx ssl dir
+      become: true
+      ansible.builtin.file:
+        state: directory
+        path: /etc/nginx/ssl
+
+    - name: Copy certificate
+      become: true
+      ansible.builtin.copy:
+        src: /vagrant/nginx/
+        dest: /etc/nginx/ssl
+
+    - name: Restart nginx service
+      become: true
+      ansible.builtin.systemd:
+        name: nginx
         state: restarted
